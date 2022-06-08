@@ -276,12 +276,15 @@ public class Cafe {
                   break;
             }// end switch
             if (authorisedUser != null) {
+               boolean isManager = IsManager(esql);
                boolean usermenu = true;
                while (usermenu) {
                   System.out.println("MAIN MENU");
                   System.out.println("---------");
                   System.out.println("1. Goto Menu");
-                  System.out.println("2. Update Profile (manager only)");
+                  if (isManager) {
+                     System.out.println("2. Update Profile (manager only)");
+                  }
                   System.out.println("3. Place an Order");
                   System.out.println("4. Update an Order");
                   System.out.println(".........................");
@@ -410,15 +413,24 @@ public class Cafe {
    // Rest of the functions definition go in here
 
    public static void Menu(Cafe esql) {
+      boolean isManager = false;
+      try {
+         isManager = IsManager(esql);
+      } catch (SQLException e) {
+         e.printStackTrace();
+      }
+
       boolean usermenu = true;
       while (usermenu) {
          System.out.println("RESTAURANT MENU");
          System.out.println("---------");
          System.out.println("1. Search by itemName");
          System.out.println("2. Search by type");
-         System.out.println("3. Add item (managers only)");
-         System.out.println("4. Delete item (managers only)");
-         System.out.println("5. Update item (managers only)");
+         if (isManager) {
+            System.out.println("3. Add item (managers only)");
+            System.out.println("4. Delete item (managers only)");
+            System.out.println("5. Update item (managers only)");
+         }
          System.out.println(".........................");
          System.out.println("9. Exit menu");
          switch (readChoice()) {
@@ -628,22 +640,36 @@ public class Cafe {
    public static void PlaceOrder(Cafe esql) {
       try {
          boolean isManager = IsManager(esql);
-
-         // Insert using this schema:
-         //CREATE TABLE Orders(
-         // orderid serial UNIQUE NOT NULL,
-         // login char(50), 
-         // paid boolean,
-         // timeStampRecieved timestamp NOT NULL,
-         // total real NOT NULL,
-         // PRIMARY KEY(orderid));
          
          // Insert an order
          System.out.println("Placing an order");
-         String query = String.format("INSERT INTO Orders (login, paid, timeStampRecieved, total) VALUES ('%s', '%s', '%s', '%s') RETURNING orderid", esql.CurrentlyloggedInUser, false, new Timestamp(System.currentTimeMillis()), 0);
-         int id = Integer.parseInt(esql.executeQueryAndReturnResult(query).get(0).get(0));
-         System.out.println("Creating new order with orderid:  " + id);
+         var currentTimeStamp = new Timestamp(System.currentTimeMillis());
+         String query = String.format("INSERT INTO Orders (login, paid, timeStampRecieved, total) VALUES ('%s', '%s', '%s', '%s') RETURNING orderid", esql.CurrentlyloggedInUser, false, currentTimeStamp, 0);
+         int orderId = Integer.parseInt(esql.executeQueryAndReturnResult(query).get(0).get(0));
+         System.out.println("Creating new order with orderid:  " + orderId);
 
+         while (true) {
+            // Get the item name:
+            System.out.print("\tEnter item name (or just press enter to stop adding items): ");
+            String itemName = in.readLine();
+
+            if (itemName.isBlank()) {
+               break;
+            }
+
+            // Get the comments:
+            System.out.print("\tEnter comments: ");
+            String comments = in.readLine();
+
+            String itemStatusQuery = String.format("INSERT INTO ItemStatus (orderid, itemName, lastUpdated, status, comments) VALUES ('%s', '%s', '%s', '%s', '%s')", orderId, itemName, currentTimeStamp, "Hasn''t started", comments);
+            esql.executeUpdate(itemStatusQuery);
+         }
+
+         // Get the total price of all elements with the orderid
+         String updateTotalQuery = String.format("UPDATE Orders SET total = (SELECT SUM(price) FROM MENU WHERE itemName IN (SELECT itemName FROM ItemStatus WHERE orderid = '%s')) WHERE orderId = '%s'", orderId, orderId);
+         esql.executeUpdate(updateTotalQuery);;
+
+         System.out.println("Order placed");
          
 
       } catch (Exception e) {
@@ -652,7 +678,35 @@ public class Cafe {
    }
 
    public static void UpdateOrder(Cafe esql) {
+      // Update the order using this schema:
+      // CREATE TABLE Orders(
+      // orderid serial UNIQUE NOT NULL,
+      // login char(50), 
+      // paid boolean,
+      // timeStampRecieved timestamp NOT NULL,
+      // total real NOT NULL,
+      // PRIMARY KEY(orderid));
 
+
+      try {
+         boolean isManager = IsManager(esql);
+
+         System.out.println("Updating order");
+         System.out.print("\tEnter order id: ");
+         int orderId = Integer.parseInt(in.readLine());
+
+         System.out.print("\tEnter new status: ");
+         String newStatus = in.readLine();
+
+         System.out.print("\tEnter new comments: ");
+         String newComments = in.readLine();
+
+         String query = String.format("UPDATE ItemStatus SET status = '%s', comments = '%s' WHERE orderid = '%s'", newStatus, newComments, orderId);
+         esql.executeUpdate(query);
+         System.out.println("Order updated");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+      }
    }
 
 }// end Cafe
