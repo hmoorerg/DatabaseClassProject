@@ -13,6 +13,8 @@
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.text.NumberFormat;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -21,6 +23,7 @@ import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Locale;
 import java.util.ArrayList;
 
 /**
@@ -37,6 +40,8 @@ public class Cafe {
    // This variable can be global for convenience.
    static BufferedReader in = new BufferedReader(
          new InputStreamReader(System.in));
+
+   public String CurrentlyloggedInUser;
 
    /**
     * Creates a new instance of Cafe
@@ -276,7 +281,7 @@ public class Cafe {
                   System.out.println("MAIN MENU");
                   System.out.println("---------");
                   System.out.println("1. Goto Menu");
-                  System.out.println("2. Update Profile");
+                  System.out.println("2. Update Profile (manager only)");
                   System.out.println("3. Place an Order");
                   System.out.println("4. Update an Order");
                   System.out.println(".........................");
@@ -286,7 +291,9 @@ public class Cafe {
                         Menu(esql);
                         break;
                      case 2:
-                        UpdateProfile(esql);
+                        if (AllowOnlyManager(esql)) {
+                           UpdateProfile(esql);
+                        }
                         break;
                      case 3:
                         PlaceOrder(esql);
@@ -388,8 +395,11 @@ public class Cafe {
 
          String query = String.format("SELECT * FROM USERS WHERE login = '%s' AND password = '%s'", login, password);
          int userNum = esql.executeQuery(query);
-         if (userNum > 0)
+         if (userNum > 0) 
+         {
+            esql.CurrentlyloggedInUser = login;
             return login;
+         }
          return null;
       } catch (Exception e) {
          System.err.println(e.getMessage());
@@ -406,6 +416,9 @@ public class Cafe {
          System.out.println("---------");
          System.out.println("1. Search by itemName");
          System.out.println("2. Search by type");
+         System.out.println("3. Add item (managers only)");
+         System.out.println("4. Delete item (managers only)");
+         System.out.println("5. Update item (managers only)");
          System.out.println(".........................");
          System.out.println("9. Exit menu");
          switch (readChoice()) {
@@ -414,6 +427,22 @@ public class Cafe {
                break;
             case 2:
                SearchMenuByType(esql);
+               break;
+            case 3:
+
+               if (AllowOnlyManager(esql))
+               {
+                  AddItem(esql);
+               }
+               break;
+            case 4:
+               if (AllowOnlyManager(esql))
+               {
+                  DeleteItem(esql);
+               }
+               break;
+            case 5:
+               UpdateItem(esql);
                break;
             case 9:
                usermenu = false;
@@ -424,27 +453,206 @@ public class Cafe {
          }
       }
    }
+   
+   private static boolean AllowOnlyManager(Cafe esql) 
+   {
+      
+      try {
+         if (IsManager(esql))
+         {
+            return true;
+         }
+         else
+         {
+            System.out.println("Unauthorized: You are not a manager!");
+            return false;
+         }
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return false;
+      }
+   }
+
+   private static boolean IsManager(Cafe esql) throws SQLException {
+      
+      String query = String.format("SELECT * FROM USERS WHERE login = '%s' AND type='Manager'", esql.CurrentlyloggedInUser);
+      int userNum = esql.executeQuery(query);
+      if (userNum > 0) 
+      {
+         return true;
+      }
+      return false;
+   }
+
+   private static void DeleteItem(Cafe esql) {
+      try {
+         System.out.println("Searching menu by Name");
+         System.out.print("\tEnter menu item name: ");
+         String menuItemName = in.readLine();
+         String query = String.format("DELETE FROM MENU WHERE itemName = '%s'", menuItemName);
+         esql.executeUpdate(query);
+         System.out.println("Item with name " + menuItemName + " deleted");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+   
+   private static void UpdateItem(Cafe esql) {
+      try {
+         System.out.println("Searching menu by Name");
+         System.out.print("\tEnter the menu item's current name: ");
+         String menuItemName = in.readLine();
+         System.out.print("\tEnter new item price: ");
+         String newItemPrice = in.readLine();
+         System.out.print("\tEnter new item description: ");
+         String newItemDescription = in.readLine();
+         System.out.print("\tEnter new image url: ");
+         String newImageURL = in.readLine();
+         String query = String.format("UPDATE MENU SET price = '%s', description = '%s', imageURL = '%s' WHERE itemName = '%s'", newItemPrice, newItemDescription, newImageURL, menuItemName);
+         esql.executeUpdate(query);
+         System.out.println("Item with name " + menuItemName + " updated");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+   private static void AddItem(Cafe esql) {
+      try {
+         System.out.print("\tEnter item name: ");
+         String itemName = in.readLine();
+         System.out.print("\tEnter item type: ");
+         String itemType = in.readLine();
+         System.out.print("\tEnter item price: ");
+         String itemPrice = in.readLine();
+         System.out.print("\tEnter item description: ");
+         String itemDescription = in.readLine();
+         System.out.print("\tEnter item image url: ");
+         String imageURL = in.readLine();
+         String query = String.format("INSERT INTO MENU (itemName, type, price, description, imageURL) VALUES ('%s','%s','%s','%s','%s')", itemName, itemType, itemPrice, itemDescription, imageURL);
+         esql.executeUpdate(query);
+         System.out.println("Item with name " + itemName + " added");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+
+   private static void PrintMenuItem(List<String> record) {
+      String name = record.get(0).trim();
+      String typeString = record.get(1).trim();
+      double price = Double.parseDouble(record.get(2).trim());
+      String description = record.get(3).trim();
+      String imageURL = record.get(4).trim();
+
+      Locale locale = new Locale("en","US");
+      NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(locale);
+
+      System.out.println("-----RECORD FOUND-----");
+      System.out.println("Name: " + name);
+      System.out.println("Type: " + typeString);
+      System.out.println("Price: " + currencyFormatter.format(price));
+      System.out.println("Description: " + description);
+      System.out.println("imageURL: " + imageURL);
+      System.out.println("-----END OF RECORD-----");
+   }
 
    public static void SearchMenuByName(Cafe esql) {
-      System.out.println("Searching menu by Name");
-      System.out.print("\tEnter menu item name: ");
-      String menuItemName = in.readLine();
+      try {
+         System.out.println("Searching menu by Name");
+         System.out.print("\tEnter menu item name: ");
+         String menuItemName = in.readLine();
+         String query = String.format("SELECT * FROM MENU WHERE itemName = '%s'", menuItemName);
+         List<List<String>> data = esql.executeQueryAndReturnResult(query);
+         for (List<String> record : data) {
+            PrintMenuItem(record);
+         }
+      
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
    }
 
    public static void SearchMenuByType(Cafe esql) {
-      System.out.println("Searching by Type");
-      System.out.print("\tEnter menu item type: ");
-      String menuItemType = in.readLine();
+      try {
+         System.out.println("Searching menu by Type");
+         System.out.print("\tEnter menu item type: ");
+         String menuItemType = in.readLine();
+         String query = String.format("SELECT * FROM MENU WHERE type = '%s'", menuItemType);
+         List<List<String>> data = esql.executeQueryAndReturnResult(query);
+         for (List<String> record : data) {
+            PrintMenuItem(record);
+         }
+      
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
 
    }
 
    public static void UpdateProfile(Cafe esql) {
+      try {
+
+         System.out.println("Updating user by login");
+         System.out.print("\tEnter login of the user you want to update: ");
+         String userName = in.readLine();
+
+         // Get the new phone number:
+         System.out.print("\tEnter the user's new phone number: ");
+         String newPhoneNumber = in.readLine();
+
+         // Get the new password:
+         System.out.print("\tEnter the user's new password: ");
+         String newPassword = in.readLine();
+
+         // Get the new favItems:
+         System.out.print("\tEnter the user's new favItems: ");
+         String newFavItems = in.readLine();
+
+         // Get the new type:
+         System.out.print("\tEnter the user's new type: ");
+         String newType = in.readLine();
+
+         String query = String.format("UPDATE Users SET phoneNum = '%s', password = '%s', favItems = '%s', type = '%s' WHERE login = '%s'", newPhoneNumber, newPassword, newFavItems, newType, userName);
+         esql.executeUpdate(query);
+         System.out.println("User with name " + userName + " updated");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
    }
 
    public static void PlaceOrder(Cafe esql) {
+      try {
+         boolean isManager = IsManager(esql);
+
+         // Insert using this schema:
+         //CREATE TABLE Orders(
+         // orderid serial UNIQUE NOT NULL,
+         // login char(50), 
+         // paid boolean,
+         // timeStampRecieved timestamp NOT NULL,
+         // total real NOT NULL,
+         // PRIMARY KEY(orderid));
+         
+         // Insert an order
+         System.out.println("Placing an order");
+         String query = String.format("INSERT INTO Orders (login, paid, timeStampRecieved, total) VALUES ('%s', '%s', '%s', '%s') RETURNING orderid", esql.CurrentlyloggedInUser, false, new Timestamp(System.currentTimeMillis()), 0);
+         int id = Integer.parseInt(esql.executeQueryAndReturnResult(query).get(0).get(0));
+         System.out.println("Creating new order with orderid:  " + id);
+
+         
+
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+      }
    }
 
    public static void UpdateOrder(Cafe esql) {
+
    }
 
 }// end Cafe
