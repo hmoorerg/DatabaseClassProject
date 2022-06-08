@@ -269,8 +269,8 @@ public class Cafe {
                 System.out.println("---------");
                 System.out.println("1. Goto Menu");
                 System.out.println("2. Update Profile");
-                System.out.println("3. Place a Order");
-                System.out.println("4. Update a Order");
+                System.out.println("3. Place an Order");
+                System.out.println("4. Update an Order");
                 System.out.println(".........................");
                 System.out.println("9. Log out");
                 switch (readChoice()){
@@ -376,7 +376,37 @@ public class Cafe {
 
 // Rest of the functions definition go in here
 
-  public static void Menu(Cafe esql){}
+  public static void Menu(Cafe esql){
+      boolean usermenu = true;
+      while(usermenu) {
+         System.out.println("RESTAURANT MENU");
+         System.out.println("---------");
+         System.out.println("1. Search by itemName");
+         System.out.println("2. Search by type");
+         System.out.println(".........................");
+         System.out.println("9. Exit menu");
+         switch (readChoice()){
+            case 1: SearchMenuByName(esql); break;
+            case 2: SearchMenuByType(esql); break;
+            case 9: usermenu = false; break;
+            default : System.out.println("Unrecognized choice!"); break;
+         }
+      }
+  }
+
+
+  public static void SearchMenuByName(Cafe esql){
+      System.out.println("Searching menu by Name");
+      System.out.print("\tEnter menu item name: ");
+      String menuItemName = in.readLine();
+  }
+
+   public static void SearchMenuByType(Cafe esql){
+      System.out.println("Searching by Type");
+      System.out.print("\tEnter menu item type: ");
+      String menuItemType = in.readLine();
+
+   }
 
   public static void UpdateProfile(Cafe esql){}
 
