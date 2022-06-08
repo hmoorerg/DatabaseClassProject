@@ -10,7 +10,6 @@
  *
  */
 
-
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -37,7 +36,7 @@ public class Cafe {
    // handling the keyboard inputs through a BufferedReader
    // This variable can be global for convenience.
    static BufferedReader in = new BufferedReader(
-                                new InputStreamReader(System.in));
+         new InputStreamReader(System.in));
 
    /**
     * Creates a new instance of Cafe
@@ -51,41 +50,41 @@ public class Cafe {
    public Cafe(String dbname, String dbport, String user, String passwd) throws SQLException {
 
       System.out.print("Connecting to database...");
-      try{
+      try {
          // constructs the connection URL
          String url = "jdbc:postgresql://localhost:" + dbport + "/" + dbname;
-         System.out.println ("Connection URL: " + url + "\n");
+         System.out.println("Connection URL: " + url + "\n");
 
          // obtain a physical connection
          this._connection = DriverManager.getConnection(url, user, passwd);
          System.out.println("Done");
-      }catch (Exception e){
-         System.err.println("Error - Unable to Connect to Database: " + e.getMessage() );
+      } catch (Exception e) {
+         System.err.println("Error - Unable to Connect to Database: " + e.getMessage());
          System.out.println("Make sure you started postgres on this machine");
          System.exit(-1);
-      }//end catch
-   }//end Cafe
+      } // end catch
+   }// end Cafe
 
    /**
-    * Method to execute an update SQL statement.  Update SQL instructions
+    * Method to execute an update SQL statement. Update SQL instructions
     * includes CREATE, INSERT, UPDATE, DELETE, and DROP.
     *
     * @param sql the input SQL string
     * @throws java.sql.SQLException when update failed
     */
-   public void executeUpdate (String sql) throws SQLException {
+   public void executeUpdate(String sql) throws SQLException {
       // creates a statement object
-      Statement stmt = this._connection.createStatement ();
+      Statement stmt = this._connection.createStatement();
 
       // issues the update instruction
-      stmt.executeUpdate (sql);
+      stmt.executeUpdate(sql);
 
       // close the instruction
-      stmt.close ();
-   }//end executeUpdate
+      stmt.close();
+   }// end executeUpdate
 
    /**
-    * Method to execute an input query SQL instruction (i.e. SELECT).  This
+    * Method to execute an input query SQL instruction (i.e. SELECT). This
     * method issues the query to the DBMS and outputs the results to
     * standard out.
     *
@@ -93,42 +92,42 @@ public class Cafe {
     * @return the number of rows returned
     * @throws java.sql.SQLException when failed to execute the query
     */
-   public int executeQueryAndPrintResult (String query) throws SQLException {
+   public int executeQueryAndPrintResult(String query) throws SQLException {
       // creates a statement object
-      Statement stmt = this._connection.createStatement ();
+      Statement stmt = this._connection.createStatement();
 
       // issues the query instruction
-      ResultSet rs = stmt.executeQuery (query);
+      ResultSet rs = stmt.executeQuery(query);
 
       /*
-       ** obtains the metadata object for the returned result set.  The metadata
+       ** obtains the metadata object for the returned result set. The metadata
        ** contains row and column info.
        */
-      ResultSetMetaData rsmd = rs.getMetaData ();
-      int numCol = rsmd.getColumnCount ();
+      ResultSetMetaData rsmd = rs.getMetaData();
+      int numCol = rsmd.getColumnCount();
       int rowCount = 0;
 
       // iterates through the result set and output them to standard out.
       boolean outputHeader = true;
-      while (rs.next()){
-		 if(outputHeader){
-			for(int i = 1; i <= numCol; i++){
-			System.out.print(rsmd.getColumnName(i) + "\t");
-			}
-			System.out.println();
-			outputHeader = false;
-		 }
-         for (int i=1; i<=numCol; ++i)
-            System.out.print (rs.getString (i) + "\t");
-         System.out.println ();
+      while (rs.next()) {
+         if (outputHeader) {
+            for (int i = 1; i <= numCol; i++) {
+               System.out.print(rsmd.getColumnName(i) + "\t");
+            }
+            System.out.println();
+            outputHeader = false;
+         }
+         for (int i = 1; i <= numCol; ++i)
+            System.out.print(rs.getString(i) + "\t");
+         System.out.println();
          ++rowCount;
-      }//end while
-      stmt.close ();
+      } // end while
+      stmt.close();
       return rowCount;
-   }//end executeQuery
+   }// end executeQuery
 
    /**
-    * Method to execute an input query SQL instruction (i.e. SELECT).  This
+    * Method to execute an input query SQL instruction (i.e. SELECT). This
     * method issues the query to the DBMS and returns the results as
     * a list of records. Each record in turn is a list of attribute values
     *
@@ -136,57 +135,57 @@ public class Cafe {
     * @return the query result as a list of records
     * @throws java.sql.SQLException when failed to execute the query
     */
-   public List<List<String>> executeQueryAndReturnResult (String query) throws SQLException {
+   public List<List<String>> executeQueryAndReturnResult(String query) throws SQLException {
       // creates a statement object
-      Statement stmt = this._connection.createStatement ();
+      Statement stmt = this._connection.createStatement();
 
       // issues the query instruction
-      ResultSet rs = stmt.executeQuery (query);
+      ResultSet rs = stmt.executeQuery(query);
 
       /*
-       ** obtains the metadata object for the returned result set.  The metadata
+       ** obtains the metadata object for the returned result set. The metadata
        ** contains row and column info.
        */
-      ResultSetMetaData rsmd = rs.getMetaData ();
-      int numCol = rsmd.getColumnCount ();
+      ResultSetMetaData rsmd = rs.getMetaData();
+      int numCol = rsmd.getColumnCount();
       int rowCount = 0;
 
       // iterates through the result set and saves the data returned by the query.
       boolean outputHeader = false;
-      List<List<String>> result  = new ArrayList<List<String>>();
-      while (rs.next()){
-        List<String> record = new ArrayList<String>();
-		for (int i=1; i<=numCol; ++i)
-			record.add(rs.getString (i));
-        result.add(record);
-      }//end while
-      stmt.close ();
+      List<List<String>> result = new ArrayList<List<String>>();
+      while (rs.next()) {
+         List<String> record = new ArrayList<String>();
+         for (int i = 1; i <= numCol; ++i)
+            record.add(rs.getString(i));
+         result.add(record);
+      } // end while
+      stmt.close();
       return result;
-   }//end executeQueryAndReturnResult
+   }// end executeQueryAndReturnResult
 
    /**
-    * Method to execute an input query SQL instruction (i.e. SELECT).  This
+    * Method to execute an input query SQL instruction (i.e. SELECT). This
     * method issues the query to the DBMS and returns the number of results
     *
     * @param query the input query string
     * @return the number of rows returned
     * @throws java.sql.SQLException when failed to execute the query
     */
-   public int executeQuery (String query) throws SQLException {
-       // creates a statement object
-       Statement stmt = this._connection.createStatement ();
+   public int executeQuery(String query) throws SQLException {
+      // creates a statement object
+      Statement stmt = this._connection.createStatement();
 
-       // issues the query instruction
-       ResultSet rs = stmt.executeQuery (query);
+      // issues the query instruction
+      ResultSet rs = stmt.executeQuery(query);
 
-       int rowCount = 0;
+      int rowCount = 0;
 
-       // iterates through the result set and count nuber of results.
-       while (rs.next()){
-          rowCount++;
-       }//end while
-       stmt.close ();
-       return rowCount;
+      // iterates through the result set and count nuber of results.
+      while (rs.next()) {
+         rowCount++;
+      } // end while
+      stmt.close();
+      return rowCount;
    }
 
    /**
@@ -199,56 +198,57 @@ public class Cafe {
     * @throws java.sql.SQLException when failed to execute the query
     */
    public int getCurrSeqVal(String sequence) throws SQLException {
-	Statement stmt = this._connection.createStatement ();
+      Statement stmt = this._connection.createStatement();
 
-	ResultSet rs = stmt.executeQuery (String.format("Select currval('%s')", sequence));
-	if (rs.next())
-		return rs.getInt(1);
-	return -1;
+      ResultSet rs = stmt.executeQuery(String.format("Select currval('%s')", sequence));
+      if (rs.next())
+         return rs.getInt(1);
+      return -1;
    }
 
    /**
     * Method to close the physical connection if it is open.
     */
-   public void cleanup(){
-      try{
-         if (this._connection != null){
-            this._connection.close ();
-         }//end if
-      }catch (SQLException e){
+   public void cleanup() {
+      try {
+         if (this._connection != null) {
+            this._connection.close();
+         } // end if
+      } catch (SQLException e) {
          // ignored.
-      }//end try
-   }//end cleanup
+      } // end try
+   }// end cleanup
 
    /**
     * The main execution method
     *
-    * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
+    * @param args the command line arguments this inclues the <mysql|pgsql> <login
+    *             file>
     */
-   public static void main (String[] args) {
+   public static void main(String[] args) {
       if (args.length != 3) {
-         System.err.println (
-            "Usage: " +
-            "java [-classpath <classpath>] " +
-            Cafe.class.getName () +
-            " <dbname> <port> <user>");
+         System.err.println(
+               "Usage: " +
+                     "java [-classpath <classpath>] " +
+                     Cafe.class.getName() +
+                     " <dbname> <port> <user>");
          return;
-      }//end if
+      } // end if
 
       Greeting();
       Cafe esql = null;
-      try{
+      try {
          // use postgres JDBC driver.
-         Class.forName ("org.postgresql.Driver").newInstance ();
+         Class.forName("org.postgresql.Driver").newInstance();
          // instantiate the Cafe object and creates a physical
          // connection.
          String dbname = args[0];
          String dbport = args[1];
          String user = args[2];
-         esql = new Cafe (dbname, dbport, user, "");
+         esql = new Cafe(dbname, dbport, user, "");
 
          boolean keepon = true;
-         while(keepon) {
+         while (keepon) {
             // These are sample SQL statements
             System.out.println("MAIN MENU");
             System.out.println("---------");
@@ -256,59 +256,80 @@ public class Cafe {
             System.out.println("2. Log in");
             System.out.println("9. < EXIT");
             String authorisedUser = null;
-            switch (readChoice()){
-               case 1: CreateUser(esql); break;
-               case 2: authorisedUser = LogIn(esql); break;
-               case 9: keepon = false; break;
-               default : System.out.println("Unrecognized choice!"); break;
-            }//end switch
+            switch (readChoice()) {
+               case 1:
+                  CreateUser(esql);
+                  break;
+               case 2:
+                  authorisedUser = LogIn(esql);
+                  break;
+               case 9:
+                  keepon = false;
+                  break;
+               default:
+                  System.out.println("Unrecognized choice!");
+                  break;
+            }// end switch
             if (authorisedUser != null) {
-              boolean usermenu = true;
-              while(usermenu) {
-                System.out.println("MAIN MENU");
-                System.out.println("---------");
-                System.out.println("1. Goto Menu");
-                System.out.println("2. Update Profile");
-                System.out.println("3. Place an Order");
-                System.out.println("4. Update an Order");
-                System.out.println(".........................");
-                System.out.println("9. Log out");
-                switch (readChoice()){
-                   case 1: Menu(esql); break;
-                   case 2: UpdateProfile(esql); break;
-                   case 3: PlaceOrder(esql); break;
-                   case 4: UpdateOrder(esql); break;
-                   case 9: usermenu = false; break;
-                   default : System.out.println("Unrecognized choice!"); break;
-                }
-              }
+               boolean usermenu = true;
+               while (usermenu) {
+                  System.out.println("MAIN MENU");
+                  System.out.println("---------");
+                  System.out.println("1. Goto Menu");
+                  System.out.println("2. Update Profile");
+                  System.out.println("3. Place an Order");
+                  System.out.println("4. Update an Order");
+                  System.out.println(".........................");
+                  System.out.println("9. Log out");
+                  switch (readChoice()) {
+                     case 1:
+                        Menu(esql);
+                        break;
+                     case 2:
+                        UpdateProfile(esql);
+                        break;
+                     case 3:
+                        PlaceOrder(esql);
+                        break;
+                     case 4:
+                        UpdateOrder(esql);
+                        break;
+                     case 9:
+                        usermenu = false;
+                        break;
+                     default:
+                        System.out.println("Unrecognized choice!");
+                        break;
+                  }
+               }
             }
-         }//end while
-      }catch(Exception e) {
-         System.err.println (e.getMessage ());
-      }finally{
+         } // end while
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+      } finally {
          // make sure to cleanup the created table and close the connection.
-         try{
-            if(esql != null) {
+         try {
+            if (esql != null) {
                System.out.print("Disconnecting from database...");
-               esql.cleanup ();
+               esql.cleanup();
                System.out.println("Done\n\nBye !");
-            }//end if
-         }catch (Exception e) {
+            } // end if
+         } catch (Exception e) {
             // ignored.
-         }//end try
-      }//end try
-   }//end main
+         } // end try
+      } // end try
+   }// end main
 
-   public static void Greeting(){
+   public static void Greeting() {
       System.out.println(
-         "\n\n*******************************************************\n" +
-         "              User Interface      	               \n" +
-         "*******************************************************\n");
-   }//end Greeting
+            "\n\n*******************************************************\n" +
+                  "              User Interface      	               \n" +
+                  "*******************************************************\n");
+   }// end Greeting
 
    /*
     * Reads the users choice given from the keyboard
+    * 
     * @int
     **/
    public static int readChoice() {
@@ -319,45 +340,47 @@ public class Cafe {
          try { // read the integer, parse it and break.
             input = Integer.parseInt(in.readLine());
             break;
-         }catch (Exception e) {
+         } catch (Exception e) {
             System.out.println("Your input is invalid!");
             continue;
-         }//end try
-      }while (true);
+         } // end try
+      } while (true);
       return input;
-   }//end readChoice
+   }// end readChoice
 
    /*
     * Creates a new user with privided login, passowrd and phoneNum
     **/
-   public static void CreateUser(Cafe esql){
-      try{
+   public static void CreateUser(Cafe esql) {
+      try {
          System.out.print("\tEnter user login: ");
          String login = in.readLine();
          System.out.print("\tEnter user password: ");
          String password = in.readLine();
          System.out.print("\tEnter user phone: ");
          String phone = in.readLine();
-         
-	    String type="Customer";
-	    String favItems="";
 
-				 String query = String.format("INSERT INTO USERS (phoneNum, login, password, favItems, type) VALUES ('%s','%s','%s','%s','%s')", phone, login, password, favItems, type);
+         String type = "Customer";
+         String favItems = "";
+
+         String query = String.format(
+               "INSERT INTO USERS (phoneNum, login, password, favItems, type) VALUES ('%s','%s','%s','%s','%s')", phone,
+               login, password, favItems, type);
 
          esql.executeUpdate(query);
-         System.out.println ("User successfully created!");
-      }catch(Exception e){
-         System.err.println (e.getMessage ());
+         System.out.println("User successfully created!");
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
       }
-   }//end CreateUser
-
+   }// end CreateUser
 
    /*
     * Check log in credentials for an existing user
+    * 
     * @return User login or null is the user does not exist
     **/
-   public static String LogIn(Cafe esql){
-      try{
+   public static String LogIn(Cafe esql) {
+      try {
          System.out.print("\tEnter user login: ");
          String login = in.readLine();
          System.out.print("\tEnter user password: ");
@@ -365,54 +388,63 @@ public class Cafe {
 
          String query = String.format("SELECT * FROM USERS WHERE login = '%s' AND password = '%s'", login, password);
          int userNum = esql.executeQuery(query);
-	 if (userNum > 0)
-		return login;
+         if (userNum > 0)
+            return login;
          return null;
-      }catch(Exception e){
-         System.err.println (e.getMessage ());
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
          return null;
       }
-   }//end
+   }// end
 
-// Rest of the functions definition go in here
+   // Rest of the functions definition go in here
 
-  public static void Menu(Cafe esql){
+   public static void Menu(Cafe esql) {
       boolean usermenu = true;
-      while(usermenu) {
+      while (usermenu) {
          System.out.println("RESTAURANT MENU");
          System.out.println("---------");
          System.out.println("1. Search by itemName");
          System.out.println("2. Search by type");
          System.out.println(".........................");
          System.out.println("9. Exit menu");
-         switch (readChoice()){
-            case 1: SearchMenuByName(esql); break;
-            case 2: SearchMenuByType(esql); break;
-            case 9: usermenu = false; break;
-            default : System.out.println("Unrecognized choice!"); break;
+         switch (readChoice()) {
+            case 1:
+               SearchMenuByName(esql);
+               break;
+            case 2:
+               SearchMenuByType(esql);
+               break;
+            case 9:
+               usermenu = false;
+               break;
+            default:
+               System.out.println("Unrecognized choice!");
+               break;
          }
       }
-  }
+   }
 
-
-  public static void SearchMenuByName(Cafe esql){
+   public static void SearchMenuByName(Cafe esql) {
       System.out.println("Searching menu by Name");
       System.out.print("\tEnter menu item name: ");
       String menuItemName = in.readLine();
-  }
+   }
 
-   public static void SearchMenuByType(Cafe esql){
+   public static void SearchMenuByType(Cafe esql) {
       System.out.println("Searching by Type");
       System.out.print("\tEnter menu item type: ");
       String menuItemType = in.readLine();
 
    }
 
-  public static void UpdateProfile(Cafe esql){}
+   public static void UpdateProfile(Cafe esql) {
+   }
 
-  public static void PlaceOrder(Cafe esql){}
+   public static void PlaceOrder(Cafe esql) {
+   }
 
-  public static void UpdateOrder(Cafe esql){}
+   public static void UpdateOrder(Cafe esql) {
+   }
 
-}//end Cafe
-
+}// end Cafe
