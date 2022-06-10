@@ -31,8 +31,8 @@ CREATE TABLE ItemStatus(
 	orderid integer,
 	itemName char(50), 
 	lastUpdated timestamp NOT NULL,
-	status char(20), 
-	comments char(130), 
+	status char(20) DEFAULT 'Hasn''t started',  
+	comments char(130),
 	PRIMARY KEY(orderid,itemName),
 	FOREIGN KEY(orderid) REFERENCES Orders(orderid) ON DELETE CASCADE,
 	FOREIGN KEY(itemName) REFERENCES Menu(itemName) ON DELETE CASCADE);

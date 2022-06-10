@@ -20,6 +20,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -289,6 +290,11 @@ public class Cafe {
                   System.out.println("3. Place an Order");
                   System.out.println("4. Update an Order");
                   System.out.println("5. List your last 5 orders");
+                  if (isManager) 
+                  {
+                     System.out.println("6. List all unpaid orders in the last 24h (managers only)");
+                     System.out.println("7. Change an order's status to paid (managers only)");
+                  }
                   System.out.println(".........................");
                   System.out.println("9. Log out");
                   switch (readChoice()) {
@@ -306,6 +312,18 @@ public class Cafe {
                         break;
                      case 5:
                         ListLastFiveOrders(esql);
+                        break;
+                     case 6:
+                        if (AllowOnlyManager(esql)) 
+                        {
+                           GetUnpaidOrdersInTheLast24Hours(esql);
+                        }
+                        break;
+                     case 7:
+                        if (AllowOnlyManager(esql)) 
+                        {
+                           ChangeUnpaidOrderToPaid(esql);
+                        }
                         break;
                      case 9:
                         usermenu = false;
@@ -492,7 +510,7 @@ public class Cafe {
                System.out.println("Type :"+menuItem.get(1).strip());
                System.out.println("Price :"+ currencyFormatter.format(price));
                System.out.println("Description :"+menuItem.get(3).strip());
-               System.out.println("Description :" + menuItem.get(3).strip());
+               System.out.println("Image URL :" + menuItem.get(4).strip());
             }
          }
       } catch (SQLException e) {
@@ -687,26 +705,7 @@ public class Cafe {
          int orderId = Integer.parseInt(esql.executeQueryAndReturnResult(query).get(0).get(0));
          System.out.println("Creating new order with orderid:  " + orderId);
 
-         while (true) {
-            // Get the item name:
-            System.out.print("\tEnter item name (or just press enter to stop adding items): ");
-            String itemName = in.readLine();
-
-            if (itemName.isBlank()) {
-               break;
-            }
-
-            // Get the comments:
-            System.out.print("\tEnter comments: ");
-            String comments = in.readLine();
-
-            String itemStatusQuery = String.format("INSERT INTO ItemStatus (orderid, itemName, lastUpdated, status, comments) VALUES ('%s', '%s', '%s', '%s', '%s')", orderId, itemName, currentTimeStamp, "Hasn''t started", comments);
-            esql.executeUpdate(itemStatusQuery);
-         }
-
-         // Get the total price of all elements with the orderid
-         String updateTotalQuery = String.format("UPDATE Orders SET total = (SELECT SUM(price) FROM MENU WHERE itemName IN (SELECT itemName FROM ItemStatus WHERE orderid = '%s')) WHERE orderId = '%s'", orderId, orderId);
-         esql.executeUpdate(updateTotalQuery);;
+         InputItemsIntoOrder(esql, currentTimeStamp, orderId);
 
          System.out.println("Order placed");
          
@@ -716,20 +715,78 @@ public class Cafe {
       }
    }
 
+   private static void InputItemsIntoOrder(Cafe esql, Timestamp currentTimeStamp, int orderId) throws IOException, SQLException {
+      while (true) {
+         // Get the item name:
+         System.out.print("\tEnter item name (or just press enter to stop adding items): ");
+         String itemName = in.readLine();
+
+         if (itemName.isBlank()) {
+            break;
+         }
+
+         // Get the comments:
+         System.out.print("\tEnter comments: ");
+         String comments = in.readLine();
+
+         String itemStatusQuery = String.format("INSERT INTO ItemStatus (orderid, itemName, lastUpdated, comments) VALUES ('%s', '%s', '%s', '%s')", orderId, itemName, currentTimeStamp, comments);
+         esql.executeUpdate(itemStatusQuery);
+      }
+
+      // Get the total price of all elements with the orderid
+      String updateTotalQuery = String.format("UPDATE Orders SET total = (SELECT SUM(price) FROM MENU WHERE itemName IN (SELECT itemName FROM ItemStatus WHERE orderid = '%s')) WHERE orderId = '%s'", orderId, orderId);
+      esql.executeUpdate(updateTotalQuery);;
+   }
+
+   public static void GetUnpaidOrdersInTheLast24Hours(Cafe esql)
+   {
+      try {
+         System.out.println("Getting orders in the last 24 hours");
+         var currentTimeStamp = new Timestamp(System.currentTimeMillis() - 86400000);
+         String query = String.format("SELECT * FROM Orders WHERE timeStampRecieved > '%s' AND paid = false ORDER BY timeStampRecieved DESC", currentTimeStamp);
+         List<List<String>> data = esql.executeQueryAndReturnResult(query);
+         for (List<String> record : data) {
+            System.out.println("Orderid: " + record.get(0));
+            System.out.println("Login: " + record.get(1));
+            System.out.println("Paid: " + record.get(2));
+            System.out.println("TimeStampRecieved: " + record.get(3));
+            System.out.println("Total: " + record.get(4));
+         }
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
    public static void ListLastFiveOrders(Cafe esql) {
       try {
          System.out.println("Getting the current user's (" + esql.CurrentlyloggedInUser +") last five orders");
-         String query = String.format("SELECT * FROM Orders WHERE Orders.login = '"+ esql.CurrentlyloggedInUser +"' ORDER BY orderid DESC LIMIT 5");
+         String query = String.format("SELECT * FROM Orders WHERE Orders.login = '"+ esql.CurrentlyloggedInUser +"' ORDER BY timeStampRecieved DESC LIMIT 5");
          List<List<String>> data = esql.executeQueryAndReturnResult(query);
          for (List<String> record : data) {
             System.out.println("-----RECORD FOUND-----");
             System.out.println("Orderid: " + record.get(0));
             System.out.println("Login: " + record.get(1));
-            System.out.println("Paid: " + (Boolean.parseBoolean(record.get(2)) ? "Yes" : "No"));
+            System.out.println("Paid: " + record.get(2));
             System.out.println("TimeStampRecieved: " + record.get(3));
             System.out.println("Total: " + record.get(4));
             System.out.println("-----END OF RECORD-----");
          }
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
+   public static void ChangeUnpaidOrderToPaid(Cafe esql) {
+      try {
+         System.out.println("Changing an unpaid order to paid");
+         System.out.print("\tEnter the orderid of the order you want to change: ");
+         int orderId = Integer.parseInt(in.readLine());
+
+         String query = String.format("UPDATE Orders SET paid = true WHERE orderid = '%s'", orderId);
+         esql.executeUpdate(query);
+         System.out.println("Order with orderid " + orderId + " changed to paid");
       } catch (Exception e) {
          System.err.println(e.getMessage());
          return;
@@ -745,15 +802,12 @@ public class Cafe {
          int orderId = Integer.parseInt(in.readLine());
 
          // Check if the order has been paid yet
-         String query = String.format("SELECT paid FROM Orders WHERE orderid = '%s'", orderId);
-         List<List<String>> getOrderInfo = esql.executeQueryAndReturnResult(query);
-         if (getOrderInfo.size() == 0) {
-            System.out.println("Order with orderid " + orderId + " does not exist");
+         String query = String.format("SELECT paid FROM Orders WHERE orderid = '%s' AND paid = false AND login = '%s'", orderId, esql.CurrentlyloggedInUser);
+         int numResults = esql.executeQuery(query);
+         if (numResults == 0) {
+            System.out.println("Order with orderid " + orderId + " does not exist or has already been paid");
             return;
          } else {
-            var firstRecord = getOrderInfo.get(0);
-            boolean wasOrderPaid = Boolean.parseBoolean(firstRecord.get(2));
-            boolean wasPlacedByCurrentUser = esql.CurrentlyloggedInUser.equals(firstRecord.get(1).strip());
             
             // Get all item status records for the current orderID
             query = String.format("SELECT * FROM ItemStatus WHERE orderid = '%s'", orderId);
@@ -762,18 +816,44 @@ public class Cafe {
             // Get all item names in the current order
             List<String> itemNames = new ArrayList<>();
             for (List<String> record : itemStatusRecords) {
-               itemNames.add(record.get(2));
+               itemNames.add(record.get(1));
             }
-            
 
-            System.out.print("\tEnter new status: ");
-            String newStatus = in.readLine();
+            // Give an option to delete each item or change it's comment field:
+            for (String itemName : itemNames) {
+               System.out.println("\tItem: " + itemName);
+               System.out.println("\t\t1. Delete item");
+               System.out.println("\t\t2. Change comments");
+               System.out.println("\t\t3. Continue without changing the item");
+               System.out.print("\t\tEnter your choice: ");
+               int choice = Integer.parseInt(in.readLine());
+               switch (choice) {
+                  case 1:
+                     // Delete the item
+                     query = String.format("DELETE FROM ItemStatus WHERE orderid = '%s' AND itemName = '%s'", orderId, itemName);
+                     esql.executeUpdate(query);
+                     break;
+                  case 2:
+                     // Change the comments
+                     System.out.print("\t\tEnter new comments: ");
+                     String comments = in.readLine();
+                     query = String.format("UPDATE ItemStatus SET comments = '%s' WHERE orderid = '%s' AND itemName = '%s'", comments, orderId, itemName);
+                     esql.executeUpdate(query);
+                     break;
+                  case 3:
+                     // Continue without changing the item
+                     break;
+                  default:
+                     System.out.println("\t\tInvalid choice");
+                     break;
+               }
+            }
 
-            System.out.print("\tEnter new comments: ");
-            String newComments = in.readLine();
+            System.out.println("Updating complete, you can now enter any new items to your order:");
 
-            String updateQuery = String.format("UPDATE ItemStatus SET status = '%s', comments = '%s' WHERE orderid = '%s'", newStatus, newComments, orderId);
-            esql.executeUpdate(updateQuery);
+            // Add new items to the order
+            InputItemsIntoOrder(esql, new Timestamp(System.currentTimeMillis()), orderId);
+
             System.out.println("Order updated");
 
          }
