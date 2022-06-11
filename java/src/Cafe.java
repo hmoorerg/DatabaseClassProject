@@ -506,11 +506,13 @@ public class Cafe {
                double price = Double.parseDouble(menuItem.get(2));
 
 
+               System.out.println();
                System.out.println("Name :"+menuItem.get(0).strip());
                System.out.println("Type :"+menuItem.get(1).strip());
                System.out.println("Price :"+ currencyFormatter.format(price));
                System.out.println("Description :"+menuItem.get(3).strip());
                System.out.println("Image URL :" + menuItem.get(4).strip());
+               System.out.println();
             }
          }
       } catch (SQLException e) {
@@ -749,7 +751,8 @@ public class Cafe {
             System.out.println("\tOrderid: " + record.get(0));
             System.out.println("\tItemName: " + record.get(1));
             System.out.println("\tLastUpdated: " + record.get(2));
-            System.out.println("\tComments: " + record.get(3));
+            System.out.println("\tStatus: " + record.get(3));
+            System.out.println("\tComments: " + record.get(4));
             System.out.println("\t-----END OF ITEM-----");
             System.out.println();
          }
