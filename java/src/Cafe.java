@@ -738,6 +738,27 @@ public class Cafe {
       esql.executeUpdate(updateTotalQuery);;
    }
 
+   public static void PrintOrderItems(Cafe esql, int orderid){
+      try {
+         String query = String.format("SELECT * FROM ItemStatus WHERE orderid = '%s'", orderid);
+         List<List<String>> data = esql.executeQueryAndReturnResult(query);
+         
+         System.out.println("-----ITEMS IN THIS ORDER-----");
+         for (List<String> record : data) {
+            System.out.println("\t-----ITEM-----");
+            System.out.println("\tOrderid: " + record.get(0));
+            System.out.println("\tItemName: " + record.get(1));
+            System.out.println("\tLastUpdated: " + record.get(2));
+            System.out.println("\tComments: " + record.get(3));
+            System.out.println("\t-----END OF ITEM-----");
+            System.out.println();
+         }
+      } catch (Exception e) {
+         System.err.println(e.getMessage());
+         return;
+      }
+   }
+
    public static void GetUnpaidOrdersInTheLast24Hours(Cafe esql)
    {
       try {
@@ -751,6 +772,7 @@ public class Cafe {
             System.out.println("Paid: " + record.get(2));
             System.out.println("TimeStampRecieved: " + record.get(3));
             System.out.println("Total: " + record.get(4));
+            PrintOrderItems(esql, Integer.parseInt(record.get(0)));
          }
       } catch (Exception e) {
          System.err.println(e.getMessage());
@@ -771,6 +793,7 @@ public class Cafe {
             System.out.println("TimeStampRecieved: " + record.get(3));
             System.out.println("Total: " + record.get(4));
             System.out.println("-----END OF RECORD-----");
+            PrintOrderItems(esql, Integer.parseInt(record.get(0)));
          }
       } catch (Exception e) {
          System.err.println(e.getMessage());

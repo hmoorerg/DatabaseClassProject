@@ -1,7 +1,7 @@
+DROP TABLE ItemStatus;
 DROP TABLE Users CASCADE;
 DROP TABLE Orders CASCADE;
 DROP TABLE Menu CASCADE;
-DROP TABLE ItemStatus;
 
 CREATE TABLE Users(
 	login char(50) UNIQUE NOT NULL, 
@@ -31,8 +31,9 @@ CREATE TABLE ItemStatus(
 	orderid integer,
 	itemName char(50), 
 	lastUpdated timestamp NOT NULL,
-	status char(20) DEFAULT 'Hasn''t started',  
+	status char(20) DEFAULT 'Hasn''t started',  -- Sets a default value for the status
 	comments char(130),
 	PRIMARY KEY(orderid,itemName),
-	FOREIGN KEY(orderid) REFERENCES Orders(orderid) ON DELETE CASCADE,
-	FOREIGN KEY(itemName) REFERENCES Menu(itemName) ON DELETE CASCADE);
+	FOREIGN KEY(orderid) REFERENCES Orders(orderid) ON DELETE CASCADE, -- If the order is deleted, the item status is deleted
+	FOREIGN KEY(itemName) REFERENCES Menu(itemName) ON DELETE CASCADE); -- If the item is deleted, the item status is deleted
+
