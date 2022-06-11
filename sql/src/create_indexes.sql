@@ -6,10 +6,12 @@ CREATE INDEX index2
 ON ItemStatus
 ( orderid );
 
+-- Used for searching items in the menu
 CREATE INDEX index3
 ON Menu
 ( itemName );
 
+-- Used for searching items in the menu
 CREATE INDEX index4
 ON menu
 ( type );
